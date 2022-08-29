@@ -5,6 +5,7 @@ pragma solidity ^0.8.9;
 import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -22,7 +23,6 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     CountersUpgradeable.Counter private bidsCounter;
     mapping(uint256 => Bid) public bids;
-    mapping(address => uint256) public balances;
 
     function initialize() public initializer {
         __Ownable_init();
@@ -32,12 +32,21 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function createBid(address paymentTokenAddr, string calldata recipientAddr)
         public
     {
-        address sender = _msgSender();
+        require(
+            Address.isContract(paymentTokenAddr),
+            "paymentTokenAddr should point to a smart contract"
+        );
 
         IERC20 paymentToken = IERC20(paymentTokenAddr);
 
-        uint256 allowance = paymentToken.allowance(sender, address(this));
+        address addrOfThis = address(this);
+        address sender = _msgSender();
+        uint256 allowance = paymentToken.allowance(sender, addrOfThis);
         require(allowance > 0, "allowance must be greater than 0");
+        require(
+            paymentToken.transferFrom(sender, addrOfThis, allowance),
+            "transfer from failed"
+        );
 
         Bid memory bid = Bid({
             paymentTokenAddr: paymentTokenAddr,
@@ -55,7 +64,67 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         onlyOwner
     {}
 
-    receive() external payable {
-        balances[msg.sender] += msg.value;
+    function getBalanceContract() public view onlyOwner returns (uint256) {
+        return address(this).balance;
+    }
+
+    function withdraw(uint256 _amount) public onlyOwner returns (bool) {
+        require(_amount > address(this).balance, "Insufficient funds");
+        payable(msg.sender).transfer(_amount);
+        return true;
+    }
+
+    function withdrawTo(uint256 _amount, address _to)
+        public
+        onlyOwner
+        returns (bool)
+    {
+        require(_amount > address(this).balance, "Insufficient funds");
+        payable(_to).transfer(_amount);
+        return true;
+    }
+
+    function withdrawToken(address _tokenContract, uint256 _amount)
+        external
+        onlyOwner
+        returns (bool)
+    {
+        IERC20 tokenContract = IERC20(_tokenContract);
+        require(
+            _amount > tokenContract.balanceOf(address(this)),
+            "Insufficient funds"
+        );
+
+        tokenContract.transfer(msg.sender, _amount);
+        return true;
+    }
+
+    function withdrawTokenTo(
+        address _tokenContract,
+        uint256 _amount,
+        address _to
+    ) external onlyOwner returns (bool) {
+        IERC20 tokenContract = IERC20(_tokenContract);
+        require(
+            _amount > tokenContract.balanceOf(address(this)),
+            "Insufficient funds"
+        );
+
+        tokenContract.transfer(_to, _amount);
+        return true;
+    }
+
+    function withdrawAllToken(address _tokenContract)
+        external
+        onlyOwner
+        returns (bool)
+    {
+        IERC20 tokenContract = IERC20(_tokenContract);
+
+        tokenContract.transfer(
+            msg.sender,
+            tokenContract.balanceOf(address(this))
+        );
+        return true;
     }
 }
