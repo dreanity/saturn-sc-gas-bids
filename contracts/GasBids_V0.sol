@@ -24,6 +24,13 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     CountersUpgradeable.Counter private bidsCounter;
     mapping(uint256 => Bid) public bids;
 
+    event CreateBid(
+        uint256 index,
+        address paymentTokenAddr,
+        uint256 paymentAmount,
+        string recipientAddr
+    );
+
     function initialize() public initializer {
         __Ownable_init();
         __UUPSUpgradeable_init();
@@ -54,6 +61,13 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             paymentAmount: allowance,
             recipientAddr: recipientAddr
         });
+
+        emit CreateBid(
+            bidsCounter.current(),
+            paymentTokenAddr,
+            allowance,
+            recipientAddr
+        );
 
         bids[bidsCounter.current()] = bid;
         bidsCounter.increment();
