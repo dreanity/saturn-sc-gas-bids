@@ -6,6 +6,7 @@ async function main() {
   const GasBidsFactory = await ethers.getContractFactory("GasBids_V0");
   const gasBids = await upgrades.deployProxy(GasBidsFactory, [], {
     initializer: 'initialize',
+    kind: 'uups',
   });
 
   await gasBids.deployed()

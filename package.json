@@ -1,8 +1,10 @@
 {
   "name": "saturn-sc-gas-bids",
   "devDependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.4",
     "@nomicfoundation/hardhat-toolbox": "^1.0.1",
     "@openzeppelin/hardhat-upgrades": "^1.20.0",
+    "chai": "^4.3.6",
     "hardhat": "^2.10.2"
   },
   "dependencies": {

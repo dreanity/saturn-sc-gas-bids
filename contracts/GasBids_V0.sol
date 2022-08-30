@@ -5,8 +5,8 @@ pragma solidity ^0.8.9;
 import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -31,9 +31,10 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function createBid(address paymentTokenAddr, string calldata recipientAddr)
         public
+        returns (bool)
     {
         require(
-            Address.isContract(paymentTokenAddr),
+            AddressUpgradeable.isContract(paymentTokenAddr),
             "paymentTokenAddr should point to a smart contract"
         );
 
@@ -56,6 +57,8 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         bids[bidsCounter.current()] = bid;
         bidsCounter.increment();
+
+        return true;
     }
 
     function _authorizeUpgrade(address newImplementation)
@@ -70,7 +73,7 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function withdraw(uint256 _amount) public onlyOwner returns (bool) {
         require(_amount > address(this).balance, "Insufficient funds");
-        payable(msg.sender).transfer(_amount);
+        payable(_msgSender()).transfer(_amount);
         return true;
     }
 
@@ -95,7 +98,7 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             "Insufficient funds"
         );
 
-        tokenContract.transfer(msg.sender, _amount);
+        tokenContract.transfer(_msgSender(), _amount);
         return true;
     }
 
@@ -122,9 +125,11 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         IERC20 tokenContract = IERC20(_tokenContract);
 
         tokenContract.transfer(
-            msg.sender,
+            _msgSender(),
             tokenContract.balanceOf(address(this))
         );
         return true;
     }
+
+    receive() external payable {}
 }
