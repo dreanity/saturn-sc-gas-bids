@@ -1,2 +1,2 @@
-# Saturn smart sontract gas bids
+# Saturn smart contract gas bids
 
