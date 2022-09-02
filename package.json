@@ -5,7 +5,7 @@
     "typecheck": "hardhat compile && tsc --noEmit",
     "coverage": "npx hardhat coverage",
     "start": "npx hardhat run dist/scripts/deploy.js --network localhost",
-    "deploy": "npx hardhat run dist/scripts/deploy.js --network binanceTestnet"
+    "deploy": "npx hardhat run --network binanceTestnet scripts/deploy.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^1.0.4",
