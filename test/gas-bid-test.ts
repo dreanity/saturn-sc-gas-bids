@@ -55,4 +55,9 @@ describe("Upgradeble GasBid", function() {
 		expect(bid.paymentAmount).to.eq(sum)
 		expect(bid.recipientAddr).to.eq(recipientAddr)
 	})
+
+	it("get bids counter", async function () {
+		const { gasBids, usdtToken } = await loadFixture(dep)
+		expect(await gasBids.getBidsCounter()).to.eq(0)
+	})
 })

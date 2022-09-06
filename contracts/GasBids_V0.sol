@@ -6,6 +6,10 @@ import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+interface IERC20Extented is IERC20 {
+    function decimals() external view returns (uint8);
+}
+
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -17,6 +21,7 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     struct Bid {
         address paymentTokenAddr;
+        uint8 paymentTokenScale;
         uint256 paymentAmount;
         string recipientAddr;
     }
@@ -27,6 +32,7 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     event BidCreated(
         uint256 index,
         address paymentTokenAddr,
+        uint8 paymentTokenScale,
         uint256 paymentAmount,
         string recipientAddr
     );
@@ -45,7 +51,7 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             "paymentTokenAddr should point to a smart contract"
         );
 
-        IERC20 paymentToken = IERC20(paymentTokenAddr);
+        IERC20Extented paymentToken = IERC20Extented(paymentTokenAddr);
 
         address addrOfThis = address(this);
         address sender = _msgSender();
@@ -56,8 +62,11 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             "transfer from failed"
         );
 
+        uint8 paymentTokenScale = paymentToken.decimals();
+
         Bid memory bid = Bid({
             paymentTokenAddr: paymentTokenAddr,
+            paymentTokenScale: paymentTokenScale,
             paymentAmount: allowance,
             recipientAddr: recipientAddr
         });
@@ -65,6 +74,7 @@ contract GasBids_V0 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit BidCreated(
             bidsCounter.current(),
             paymentTokenAddr,
+            paymentTokenScale,
             allowance,
             recipientAddr
         );
